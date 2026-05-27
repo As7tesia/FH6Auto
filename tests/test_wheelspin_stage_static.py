@@ -53,14 +53,21 @@ class WheelspinStageStaticTests(unittest.TestCase):
             with self.subTest(filename=filename):
                 self.assertIn(filename, self.source)
 
-    def test_spin_stage_spams_enter_after_click_until_exit_images(self):
+    def test_empty_super_spins_transition_to_regular_spins(self):
+        self.assertIn('return "empty"', self.source)
+        self.assertIn('super_result = self.consume_single_wheelspin_type("SuperWheelSpin.png", "NoSuperSpinsLeft.png", "超级抽奖")', self.source)
+        self.assertIn("if super_result is False:", self.source)
+        self.assertIn('regular_result = self.consume_single_wheelspin_type("WheelSpin.png", "NoSpinsLeft.png", "普通抽奖")', self.source)
+        self.assertIn("if regular_result is False:", self.source)
+
+    def test_spin_stage_spams_enter_in_batches_before_image_checks(self):
         self.assertRegex(
             self.source,
-            r"self\.game_click\(pos_spin\)\s+self\.hw_press\(\"enter\", delay=0\.02\)\s+time\.sleep\(0\.5\)",
+            r"for _ in range\(50\):\s+if not self\.is_running:\s+return False\s+self\.hw_press\(\"enter\", delay=0\.02\)\s+time\.sleep\(0\.1\)",
         )
         self.assertRegex(
             self.source,
-            r"self\.hw_press\(\"enter\", delay=0\.02\)\s+time\.sleep\(0\.5\)",
+            r"if self\.find_image\(empty_image, region=self\.regions\[\"全界面\"\], threshold=0\.75, fast_mode=True\):\s+empty_seen = True\s+break",
         )
         self.assertIn("for attempt in range(500):", self.source)
         self.assertGreaterEqual(len(re.findall(r'self\.hw_press\("pagedown"\)', self.source)), 3)

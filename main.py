@@ -3224,7 +3224,9 @@ class FH_UltimateBot(ctk.CTk):
                 self.log(f"{log_name}已用完，确认返回")
                 self.hw_press("enter")
                 time.sleep(1.0)
-                return bool(self.wait_for_wheelspin_menu(timeout=12))
+                if not self.wait_for_wheelspin_menu(timeout=12):
+                    return False
+                return "empty"
 
             pos_spin = self.wait_for_image(
                 spin_image,
@@ -3240,14 +3242,18 @@ class FH_UltimateBot(ctk.CTk):
 
             self.log(f"开始{log_name} ({attempt + 1})")
             self.game_click(pos_spin)
-            self.hw_press("enter", delay=0.02)
-            time.sleep(0.5)
 
             empty_seen = False
             menu_seen = False
-            for _ in range(1200):
+            for _ in range(240):
                 if not self.is_running:
                     return False
+
+                for _ in range(50):
+                    if not self.is_running:
+                        return False
+                    self.hw_press("enter", delay=0.02)
+                    time.sleep(0.1)
 
                 if self.find_image(empty_image, region=self.regions["全界面"], threshold=0.75, fast_mode=True):
                     empty_seen = True
@@ -3257,9 +3263,6 @@ class FH_UltimateBot(ctk.CTk):
                     menu_seen = True
                     break
 
-                self.hw_press("enter", delay=0.02)
-                time.sleep(0.5)
-
             if not empty_seen and not menu_seen:
                 self.log(f"{log_name}等待结果超时")
                 return False
@@ -3268,7 +3271,9 @@ class FH_UltimateBot(ctk.CTk):
                 self.log(f"{log_name}已用完，确认返回")
                 self.hw_press("enter")
                 time.sleep(1.0)
-                return bool(self.wait_for_wheelspin_menu(timeout=12))
+                if not self.wait_for_wheelspin_menu(timeout=12):
+                    return False
+                return "empty"
 
             if not self.wait_for_wheelspin_menu(timeout=12):
                 self.log(f"{log_name}后未能返回我的地平线菜单")
@@ -3293,10 +3298,12 @@ class FH_UltimateBot(ctk.CTk):
             self.log("未找到抽奖入口")
             return False
 
-        if not self.consume_single_wheelspin_type("SuperWheelSpin.png", "NoSuperSpinsLeft.png", "超级抽奖"):
+        super_result = self.consume_single_wheelspin_type("SuperWheelSpin.png", "NoSuperSpinsLeft.png", "超级抽奖")
+        if super_result is False:
             return False
 
-        if not self.consume_single_wheelspin_type("WheelSpin.png", "NoSpinsLeft.png", "普通抽奖"):
+        regular_result = self.consume_single_wheelspin_type("WheelSpin.png", "NoSpinsLeft.png", "普通抽奖")
+        if regular_result is False:
             return False
 
         for _ in range(2):
