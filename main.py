@@ -3275,9 +3275,9 @@ class FH_UltimateBot(ctk.CTk):
                     return False
                 return "empty"
 
-            if not self.wait_for_wheelspin_menu(timeout=12):
-                self.log(f"{log_name}后未能返回我的地平线菜单")
-                return False
+            if menu_seen:
+                self.log(f"{log_name}已回到抽奖菜单，切换下一类抽奖")
+                return "empty"
 
         self.log(f"{log_name}尝试次数过多，停止")
         return False

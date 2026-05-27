@@ -60,6 +60,12 @@ class WheelspinStageStaticTests(unittest.TestCase):
         self.assertIn('regular_result = self.consume_single_wheelspin_type("WheelSpin.png", "NoSpinsLeft.png", "普通抽奖")', self.source)
         self.assertIn("if regular_result is False:", self.source)
 
+    def test_menu_return_after_spin_type_is_treated_as_empty(self):
+        self.assertRegex(
+            self.source,
+            r"if menu_seen:\s+self\.log\(f\"\{log_name\}已回到抽奖菜单，切换下一类抽奖\"\)\s+return \"empty\"",
+        )
+
     def test_spin_stage_spams_enter_in_batches_before_image_checks(self):
         self.assertRegex(
             self.source,
