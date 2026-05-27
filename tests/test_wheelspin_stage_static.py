@@ -15,10 +15,9 @@ class WheelspinStageStaticTests(unittest.TestCase):
     def test_pipeline_includes_spin_as_fifth_stage(self):
         self.assertIn('steps = ["race", "buy", "cj", "sell", "spin"]', self.source)
         self.assertIn('elif step_name == "spin":', self.source)
-        self.assertIn("self.logic_consume_wheelspins", self.source)
+        self.assertIn("self.logic_consume_wheelspins()", self.source)
 
     def test_fifth_stage_ui_and_defaults_are_configured(self):
-        self.assertIn('"spin_count": 1', self.source)
         self.assertIn('"chk_5": True', self.source)
         self.assertIn('"next_4": 5', self.source)
         self.assertIn('"next_5": 1', self.source)
@@ -26,6 +25,19 @@ class WheelspinStageStaticTests(unittest.TestCase):
         self.assertIn('data["next_4"] = 5', self.source)
         self.assertIn('"5. 开抽"', self.source)
         self.assertIn('lambda: self.start_pipeline("spin")', self.source)
+        self.assertNotIn('"spin_count": 1', self.source)
+        self.assertNotIn("self.entry_spin", self.source)
+        self.assertNotIn("self.lbl_spin", self.source)
+
+    def test_next_step_controls_are_embedded_in_stage_cards(self):
+        self.assertIn("def add_next_step(parent, var_checked, def_step):", self.source)
+        self.assertIn("add_next_step(box_race, self.var_chk1", self.source)
+        self.assertIn("add_next_step(box_car, self.var_chk2", self.source)
+        self.assertIn("add_next_step(self.box_cj, self.var_chk3", self.source)
+        self.assertIn("add_next_step(box_sc, self.var_chk4", self.source)
+        self.assertIn("add_next_step(box_spin, self.var_chk5", self.source)
+        self.assertNotIn("def create_next_step(", self.source)
+        self.assertNotIn("self.next_frame", self.source)
 
     def test_next_step_validation_allows_five_steps(self):
         self.assertRegex(self.source, r"if iv > 5:\s+iv = 5")

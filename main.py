@@ -271,7 +271,7 @@ class FH_UltimateBot(ctk.CTk):
         super().__init__()
         #窗口相关
         self.title(f"FH6Auto by YSTO v{CURRENT_VERSION}")
-        self.geometry("1800x800")
+        self.geometry("1800x880")
         #self.minsize(980, 560)
         self.attributes("-topmost", False)
         self.attributes("-alpha", 0.98)
@@ -316,7 +316,6 @@ class FH_UltimateBot(ctk.CTk):
             "buy_count": 30,
             "cj_count": 30,
             "sc_count": 30,
-            "spin_count": 1,
             "chk_1": True,
             "chk_2": True,
             "chk_3": True,
@@ -430,7 +429,7 @@ class FH_UltimateBot(ctk.CTk):
             self.config["buy_count"] = int(self.entry_car.get())
             self.config["cj_count"] = int(self.entry_cj.get())
             self.config["sc_count"] = int(self.entry_sc.get())
-            self.config["spin_count"] = int(self.entry_spin.get())
+            self.config.pop("spin_count", None)
             self.config["global_loops"] = int(self.entry_global_loop.get())
             self.config["share_code"] = "".join(c for c in self.entry_share.get() if c.isdigit())
             #self.config["base_width"] = int(self.entry_base_w.get())
@@ -545,11 +544,11 @@ class FH_UltimateBot(ctk.CTk):
         self.config_frame = ctk.CTkFrame(self.top_container, fg_color="transparent")
         self.config_frame.pack(fill="x")
 
-        def create_box(parent, title, btn_text, btn_cmd, btn_color, def_val):
+        def create_box(parent, title, btn_text, btn_cmd, btn_color, def_val=None):
             frame = ctk.CTkFrame(
                 parent,
-                width=210,
-                height=300,
+                width=220,
+                height=360,
                 corner_radius=12,
                 border_width=1,
                 border_color="#2B2B2B",
@@ -575,39 +574,42 @@ class FH_UltimateBot(ctk.CTk):
             )
             btn.pack(pady=8, padx=10)
 
-            entry = ctk.CTkEntry(frame, width=95, height=34, justify="center", corner_radius=8)
-            entry.insert(0, str(def_val))
-            entry.pack(pady=8)
+            entry = None
+            lbl = None
+            if def_val is not None:
+                entry = ctk.CTkEntry(frame, width=95, height=34, justify="center", corner_radius=8)
+                entry.insert(0, str(def_val))
+                entry.pack(pady=8)
 
-            lbl = ctk.CTkLabel(
-                frame,
-                text=f"执行: 0 / {def_val}",
-                text_color="#A0A0A0",
-                font=ctk.CTkFont(size=16),
-            )
-            lbl.pack(pady=8)
+                lbl = ctk.CTkLabel(
+                    frame,
+                    text=f"执行: 0 / {def_val}",
+                    text_color="#A0A0A0",
+                    font=ctk.CTkFont(size=16),
+                )
+                lbl.pack(pady=8)
             return frame, btn, entry, lbl
 
-        def create_next_step(parent, var_checked, def_step, box_h=300):
-            frame = ctk.CTkFrame(parent, width=120, height=box_h, corner_radius=12, border_width=1, border_color="#2B2B2B")
-            frame.pack(side="left", padx=4)
+        def add_next_step(parent, var_checked, def_step):
+            frame = ctk.CTkFrame(parent, fg_color="#242424", height=62, corner_radius=10)
+            frame.pack(side="bottom", fill="x", padx=12, pady=(8, 12))
             frame.pack_propagate(False)
 
             ctk.CTkLabel(
                 frame,
                 text="下一步骤",
-                font=ctk.CTkFont(size=18, weight="bold"),
+                font=ctk.CTkFont(size=14, weight="bold"),
                 text_color="#5DADE2",
-            ).pack(pady=(55, 10))
+            ).pack(side="left", padx=(10, 6))
 
-            entry = ctk.CTkEntry(frame, width=60, height=34, justify="center", corner_radius=8)
+            entry = ctk.CTkEntry(frame, width=48, height=30, justify="center", corner_radius=8)
             entry.insert(0, str(def_step))
-            entry.pack(pady=6)
+            entry.pack(side="left", padx=(0, 8))
 
             chk = ctk.CTkCheckBox(frame, text="继续", variable=var_checked, width=60)
-            chk.pack(pady=8)
+            chk.pack(side="left", padx=(0, 8))
 
-            return frame, entry, chk
+            return entry, chk
 
         self.var_chk1 = ctk.BooleanVar(value=self.config["chk_1"])
         self.var_chk2 = ctk.BooleanVar(value=self.config["chk_2"])
@@ -626,10 +628,7 @@ class FH_UltimateBot(ctk.CTk):
         self.entry_share = ctk.CTkEntry(box_race, width=130, justify="center", placeholder_text="蓝图数字代码")
         self.entry_share.insert(0, self.config["share_code"])
         self.entry_share.pack(pady=4)
-
-        self.next_frame1, self.entry_next1, self.chk1 = create_next_step(
-            self.config_frame, self.var_chk1, self.config.get("next_1", 2)
-        )
+        self.entry_next1, self.chk1 = add_next_step(box_race, self.var_chk1, self.config.get("next_1", 2))
 
         box_car, self.btn_car, self.entry_car, self.lbl_car = create_box(
             self.config_frame,
@@ -640,15 +639,12 @@ class FH_UltimateBot(ctk.CTk):
             self.config["buy_count"],
         )
         self.entry_car.bind("<KeyRelease>", self.sync_buy_to_sell)
-
-        self.next_frame2, self.entry_next2, self.chk2 = create_next_step(
-            self.config_frame, self.var_chk2, self.config.get("next_2", 3)
-        )
+        self.entry_next2, self.chk2 = add_next_step(box_car, self.var_chk2, self.config.get("next_2", 3))
 
         self.box_cj = ctk.CTkFrame(
             self.config_frame,
             width=360,
-            height=300,
+            height=360,
             corner_radius=12,
             border_width=1,
             border_color="#2B2B2B",
@@ -657,7 +653,7 @@ class FH_UltimateBot(ctk.CTk):
         self.box_cj.pack(side="left", padx=8)
 
         top_cj = ctk.CTkFrame(self.box_cj, fg_color="transparent")
-        top_cj.pack(fill="x", pady=10)
+        top_cj.pack(fill="x", pady=(10, 0))
 
         left_cj = ctk.CTkFrame(top_cj, fg_color="transparent")
         left_cj.pack(side="left", padx=10)
@@ -735,9 +731,7 @@ class FH_UltimateBot(ctk.CTk):
             text_color="#A0A0A0",
         ).grid(row=4, column=0, columnspan=4, pady=(8, 0))
 
-        self.next_frame3, self.entry_next3, self.chk3 = create_next_step(
-            self.config_frame, self.var_chk3, self.config.get("next_3", 4)
-        )
+        self.entry_next3, self.chk3 = add_next_step(self.box_cj, self.var_chk3, self.config.get("next_3", 4))
 
         box_sc, self.btn_sc, self.entry_sc, self.lbl_sc = create_box(
             self.config_frame,
@@ -747,23 +741,16 @@ class FH_UltimateBot(ctk.CTk):
             "#D97706",
             self.config.get("sc_count", 30),
         )
+        self.entry_next4, self.chk4 = add_next_step(box_sc, self.var_chk4, self.config.get("next_4", 5))
 
-        self.next_frame4, self.entry_next4, self.chk4 = create_next_step(
-            self.config_frame, self.var_chk4, self.config.get("next_4", 5)
-        )
-
-        box_spin, self.btn_spin, self.entry_spin, self.lbl_spin = create_box(
+        box_spin, self.btn_spin, _, _ = create_box(
             self.config_frame,
             "5. 开抽",
             "开始",
             lambda: self.start_pipeline("spin"),
             "#0E7490",
-            self.config.get("spin_count", 1),
         )
-
-        self.next_frame5, self.entry_next5, self.chk5 = create_next_step(
-            self.config_frame, self.var_chk5, self.config.get("next_5", 1)
-        )
+        self.entry_next5, self.chk5 = add_next_step(box_spin, self.var_chk5, self.config.get("next_5", 1))
                 # ====== 抽离到底部的全局设置栏 (放在上方) ======
         # 【修改1】把 self.top_container 改成了 self
         self.global_settings_frame = ctk.CTkFrame(self, fg_color="#2B2B2B", height=45, corner_radius=10)
@@ -1298,7 +1285,7 @@ class FH_UltimateBot(ctk.CTk):
                     elif step_name == "sell":
                         success = self.sell_consumable_car(int(self.entry_sc.get()))
                     elif step_name == "spin":
-                        success = self.logic_consume_wheelspins(int(self.entry_spin.get()))
+                        success = self.logic_consume_wheelspins()
                 except Exception as e:
                     self.log(f"执行模块 {step_name} 时异常: {e}")
                     success = False
@@ -1408,7 +1395,7 @@ class FH_UltimateBot(ctk.CTk):
             # 恢复窗口原本的状态
             self.btn_stop.configure(text="等待指令 (F8)", fg_color="#3A3A3A", hover_color="#4A4A4A")
             self.attributes("-topmost", False)
-            self.geometry("1800x800")
+            self.geometry("1800x880")
             self.center_window()
 
         self.ui_call(restore_ui)
@@ -3289,11 +3276,8 @@ class FH_UltimateBot(ctk.CTk):
         self.log(f"{log_name}尝试次数过多，停止")
         return False
 
-    def logic_consume_wheelspins(self, target_count):
-        if self.spin_counter >= target_count:
-            return True
-
-        self.update_running_ui("开抽", self.spin_counter, target_count)
+    def logic_consume_wheelspins(self):
+        self.update_running_ui("开抽", 0, 1)
 
         self.log("进入菜单")
         if not self.enter_menu():
@@ -3320,8 +3304,8 @@ class FH_UltimateBot(ctk.CTk):
             self.hw_press("pageup")
             time.sleep(0.5)
 
-        self.spin_counter += 1
-        self.update_running_ui("开抽", self.spin_counter, target_count)
+        self.spin_counter = 1
+        self.update_running_ui("开抽", 1, 1)
         return True
     #===============================
     #---自动超级抽奖-----
