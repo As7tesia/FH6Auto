@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 import unittest
 
 
@@ -30,7 +31,11 @@ class SellRemovalStaticTests(unittest.TestCase):
         ]
         for filename in required:
             with self.subTest(filename=filename):
-                self.assertTrue((IMAGES / filename).exists(), filename)
+                path = IMAGES / filename
+                self.assertTrue(path.exists(), filename)
+                data = path.read_bytes()
+                self.assertGreater(len(data), 8, filename)
+                self.assertEqual(data[:8], b"\x89PNG\r\n\x1a\n", filename)
 
     def test_sell_flow_uses_two_stage_verification(self):
         self.assertIn("def find_sell_target_22b_card(self):", self.source)
@@ -41,8 +46,13 @@ class SellRemovalStaticTests(unittest.TestCase):
         self.assertIn("remove_selected_verified_sell_car()", self.source)
 
     def test_old_brittle_delete_match_is_removed(self):
-        self.assertNotIn('threshold=0.98', self.source)
-        self.assertNotIn('"D.png",\n                    region=self.regions["左"]', self.source)
+        old_delete_match = re.compile(
+            r'find_image\(\s*"D\.png"\s*,\s*'
+            r'region=self\.regions\["左"\]\s*,\s*'
+            r'threshold=0\.98',
+            re.MULTILINE,
+        )
+        self.assertIsNone(old_delete_match.search(self.source))
 
     def test_grid_candidate_requires_identity_b600_and_legendary(self):
         for filename in [
