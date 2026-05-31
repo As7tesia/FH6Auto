@@ -3300,44 +3300,18 @@ class FH_UltimateBot(ctk.CTk):
             if not self.is_running:
                 return False
 
-            found_car = False
-            for _ in range(30):
-                if not self.is_running:
-                    return False
-                pos_DEL = self.wait_for_image(
-                    "D.png",
-                    region=self.regions["左"],
-                    threshold=0.98,
-					timeout=12,
-                    fast_mode=False
-                )
-                if pos_DEL:
-                    self.game_click(pos_DEL)
-                    found_car = True
-                    break
-                self.hw_press("right")
-                time.sleep(0.02)
-            if not pos_DEL:
-                self.log("列表中未找到目标车辆")
+            pos_del = self.find_sell_target_22b_card()
+            if not pos_del:
                 return False
-            time.sleep(1.5)
-            self.hw_press("enter")
-            time.sleep(1.5)
-            self.hw_press("down")
-            time.sleep(0.25)
-            self.hw_press("down")
-            time.sleep(0.25)
-            self.hw_press("down")
-            time.sleep(0.25)
-            self.hw_press("down")
-            time.sleep(0.25)
-            self.hw_press("enter")
-            time.sleep(1.5)
-            self.hw_press("down")
-            time.sleep(0.25)
-            self.hw_press("enter")
-            time.sleep(2.0)
-            self.hw_press("up")
+
+            self.game_click(pos_del)
+            time.sleep(0.8)
+
+            if not self.verify_sell_target_detail_panel():
+                return False
+
+            if not self.remove_selected_verified_sell_car():
+                return False
             self.sc_count += 1
             self.log(f"已尝试删除车辆 {self.sc_count}/{target_count}")
 
