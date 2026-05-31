@@ -47,7 +47,7 @@ class SellRemovalStaticTests(unittest.TestCase):
 
     def test_old_brittle_delete_match_is_removed(self):
         old_delete_match = re.compile(
-            r'find_image\(\s*"D\.png"\s*,\s*'
+            r'(?:wait_for_image|find_image)\(\s*"D\.png"\s*,\s*'
             r'region=self\.regions\["左"\]\s*,\s*'
             r'threshold=0\.98',
             re.MULTILINE,
