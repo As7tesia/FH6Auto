@@ -3011,6 +3011,12 @@ class FH_UltimateBot(ctk.CTk):
         y1 = max(gy, min(gy + gh - region_h, int(py - region_h / 2)))
         return (x1, y1, region_w, region_h)
 
+    def get_sell_card_verification_region(self, point, identity_template):
+        px, py = point
+        if identity_template == "sell_22b_title.png":
+            py += int(self.regions["全界面"][3] * 0.08)
+        return self.get_region_around_point((px, py))
+
     def get_sell_detail_panel_region(self):
         gx, gy, gw, gh = self.regions["全界面"]
         return (gx, gy, max(260, int(gw * 0.24)), gh)
@@ -3030,19 +3036,32 @@ class FH_UltimateBot(ctk.CTk):
             if not self.is_running:
                 return None
 
-            identity_pos = self.wait_for_any_image(
-                identity_templates,
-                region=self.regions["全界面"],
-                threshold=0.82,
-                timeout=0.6,
-                interval=0.15,
-                fast_mode=False,
-            )
+            identity_template = None
+            identity_pos = None
+            for template_name in identity_templates:
+                if not self.is_running:
+                    return None
+
+                template_pos = self.wait_for_image(
+                    template_name,
+                    region=self.regions["全界面"],
+                    threshold=0.82,
+                    timeout=0.6,
+                    interval=0.15,
+                    fast_mode=False,
+                )
+                if template_pos:
+                    identity_template = template_name
+                    identity_pos = template_pos
+                    break
+
             identity_hit = identity_pos is not None
             if identity_hit:
-                card_region = self.get_region_around_point(identity_pos)
+                card_region = self.get_sell_card_verification_region(identity_pos, identity_template)
                 required_hits = 0
                 for template_name in required_templates:
+                    if not self.is_running:
+                        return None
                     if self.find_image(template_name, region=card_region, threshold=0.80, fast_mode=True):
                         required_hits += 1
 
@@ -3050,6 +3069,8 @@ class FH_UltimateBot(ctk.CTk):
                     self.log(f"删车：识别到 22B 候选卡片 (round {scan_round + 1})。")
                     return identity_pos
 
+            if not self.is_running:
+                return None
             self.hw_press("right")
             time.sleep(0.08)
 
@@ -3080,8 +3101,13 @@ class FH_UltimateBot(ctk.CTk):
         return False
 
     def remove_selected_verified_sell_car(self):
+        if not self.is_running:
+            return False
+
         self.hw_press("enter")
         time.sleep(1.0)
+        if not self.is_running:
+            return False
 
         remove_pos = self.wait_for_any_image(
             ["sell_remove_button_white.png", "sell_remove_button_black.png"],
@@ -3091,12 +3117,18 @@ class FH_UltimateBot(ctk.CTk):
             interval=0.25,
             fast_mode=True,
         )
+        if not self.is_running:
+            return False
         if not remove_pos:
             self.log("未识别到从车库移除按钮，停止以避免误删")
             return False
 
+        if not self.is_running:
+            return False
         self.game_click(remove_pos)
         time.sleep(0.8)
+        if not self.is_running:
+            return False
 
         confirm_pos = self.wait_for_any_image(
             ["sell_remove_confirm_yes_white.png", "sell_remove_confirm_yes_black.png"],
@@ -3106,12 +3138,18 @@ class FH_UltimateBot(ctk.CTk):
             interval=0.25,
             fast_mode=True,
         )
+        if not self.is_running:
+            return False
         if not confirm_pos:
             self.log("未识别到移除确认按钮，停止以避免误删")
             return False
 
+        if not self.is_running:
+            return False
         self.game_click(confirm_pos)
         time.sleep(2.0)
+        if not self.is_running:
+            return False
         return True
 
     def sell_consumable_car(self, target_count):
